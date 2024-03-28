@@ -3,6 +3,9 @@ import os
 import subprocess
 import shutil
 
+SUPPORTED_PLATFORMS = ["macOS", "Linux"]
+SUPPORTED_SHELLS = ["bash", "zsh"]
+
 def check_platform():
     os_name = platform.system()
     if os_name == "Darwin":
@@ -33,23 +36,24 @@ def check_shell():
 
 def install_starship():
     platform_type = check_platform()
-    if platform_type == "macOS" or platform_type == "Linux":
+    if platform_type in SUPPORTED_PLATFORMS:
         subprocess.run(["curl", "-sS", "https://starship.rs/install.sh"], check=True)
     else:
         print("Starship installation is not supported on this platform.")
 
 def add_starship_to_shell():
     shell_type = check_shell()
-    if shell_type == "bash":
-        if not is_configured("~/.bashrc", 'eval "$(starship init bash)"'):
-            subprocess.run(["eval", '"$(starship init bash)"'], shell=True, check=True)
-            with open(os.path.expanduser("~/.bashrc"), "a") as bashrc:
-                bashrc.write('\n' + 'eval "$(starship init bash)"')
-    elif shell_type == "zsh":
-        if not is_configured("~/.zshrc", 'eval "$(starship init zsh)"'):
-            subprocess.run(["eval", '"$(starship init zsh)"'], shell=True, check=True)
-            with open(os.path.expanduser("~/.zshrc"), "a") as zshrc:
-                zshrc.write('\n' + 'eval "$(starship init zsh)"')
+    if shell_type in SUPPORTED_SHELLS:
+        if shell_type == "bash":
+            if not is_configured("~/.bashrc", 'eval "$(starship init bash)"'):
+                subprocess.run(["eval", '"$(starship init bash)"'], shell=True, check=True)
+                with open(os.path.expanduser("~/.bashrc"), "a") as bashrc:
+                    bashrc.write('\n' + 'eval "$(starship init bash)"')
+        elif shell_type == "zsh":
+            if not is_configured("~/.zshrc", 'eval "$(starship init zsh)"'):
+                subprocess.run(["eval", '"$(starship init zsh)"'], shell=True, check=True)
+                with open(os.path.expanduser("~/.zshrc"), "a") as zshrc:
+                    zshrc.write('\n' + 'eval "$(starship init zsh)"')
     else:
         print("Can't configure starship with the current shell:", shell_type)
 
@@ -70,7 +74,15 @@ def is_configured(file_path, line):
                 return True
     return False
 
+def setup_starship():
+    platform_type = check_platform()
+    shell_type = check_shell()
+    if platform_type in SUPPORTED_PLATFORMS and shell_type in SUPPORTED_SHELLS:
+        install_starship()
+        add_starship_to_shell()
+        copy_starship_config()
+    else:
+        print("Your platform or shell is not supported.")
+
 if __name__ == "__main__":
-    install_starship()
-    add_starship_to_shell()
-    copy_starship_config()
+    setup_starship()
